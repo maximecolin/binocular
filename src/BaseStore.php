@@ -37,6 +37,10 @@ abstract class BaseStore
         return $reducer(is_null($currentState) ? [] : $currentState, $action->getData());
     }
 
+    /**
+     * If the entity is deletable this method should be used to check it.
+     * If not, don't use it.
+     */
     protected function checkState(array $currentState = null): ?array
     {
         if (is_null($currentState)) {

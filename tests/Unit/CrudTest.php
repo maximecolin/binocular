@@ -15,36 +15,31 @@ class CrudTest extends TestCase
      */
     private $store;
 
-    public function setUp()
-    {
-        parent::setUp();
-
-        $this->store = new InMemoryStore($this->getReducers());
-    }
-
     public function test_state_change()
     {
+        $store = new InMemoryStore($this->getReducers());
+        
         // create
         $createEvent = $this->getCreateEvent();
-        $this->store->dispatch($createEvent);
-        $state = $this->store->getState($createEvent->getEntityId());
+        $store->dispatch($createEvent);
+        $state = $store->getState($createEvent->getEntityId());
         // check if new state is correct
         $this->assertEquals($state, ['foo' => 'baz']);
         $this->assertCount(1, InMemoryStore::$entities[$createEvent->getEntityId()]);
 
         // update
         $updateEvent = $this->getUpdateEvent();
-        $this->store->dispatch($updateEvent);
-        $state = $this->store->getState($updateEvent->getEntityId());
+        $store->dispatch($updateEvent);
+        $state = $store->getState($updateEvent->getEntityId());
         // check if new state is correct
         $this->assertEquals($state, ['hello' => 'world', 'foo' => 'baz']);
         $this->assertCount(2, InMemoryStore::$entities[$updateEvent->getEntityId()]);
 
         // delete
         $deleteEvent = $this->getDeleteEvent();
-        $this->store->dispatch($deleteEvent);
+        $store->dispatch($deleteEvent);
         try {
-            $this->store->getState($deleteEvent->getEntityId());
+            $store->getState($deleteEvent->getEntityId());
         } catch (DeletedEntityException $e) {
             $this->assertCount(3, InMemoryStore::$entities[$deleteEvent->getEntityId()]);
         }

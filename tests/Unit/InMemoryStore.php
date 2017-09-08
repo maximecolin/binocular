@@ -15,6 +15,7 @@ class InMemoryStore extends BaseStore implements Store
 
     public function dispatch(Event $event): ?array
     {
+        // call the parent, it uses the reducer to apply the action
         $newState = parent::dispatch($event);
 
         $this->persist($event->getEntityId(), $newState, $event->getAction()->toArray());
@@ -25,7 +26,7 @@ class InMemoryStore extends BaseStore implements Store
     public function getState(string $entityId): ?array
     {
         $currentState = $this->retrieve($entityId);
-
+        // check if it's deleted before returning
         return $this->checkState($currentState);
     }
 
