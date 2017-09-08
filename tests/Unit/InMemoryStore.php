@@ -11,7 +11,7 @@ class InMemoryStore implements Store
     /**
      * @var Event[]
      */
-    private static $entities = [];
+    public static $entities = [];
 
     /**
      * @var array
@@ -23,7 +23,7 @@ class InMemoryStore implements Store
         $this->reducers = $reducers;
     }
 
-    public function dispatch(Event $event): array
+    public function dispatch(Event $event): ?array
     {
         $action = $event->getAction();
 
@@ -41,7 +41,9 @@ class InMemoryStore implements Store
             );
         }
 
-        $newState = $reducer($event->getCurrentState(), $action->getData());
+        $currentState = $this->getState($event->getEntityId());
+
+        $newState = $reducer(is_null($currentState) ? [] : $currentState, $action->getData());
 
         $this->persist($event->getEntityId(), $newState, $action->toArray());
 
@@ -54,7 +56,7 @@ class InMemoryStore implements Store
             $currentState = end(self::$entities[$entityId]);
 
             if(!is_null($currentState['deleted_at'])) {
-                $message = sprintf('Entity was deleted on %s', $currentState['deleted_at']->formar(\DATE_W3C));
+                $message = sprintf('Entity was deleted on %s', $currentState['deleted_at']->format(\DATE_W3C));
                 throw new DeletedEntityException($message);
             }
 
