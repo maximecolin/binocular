@@ -2,7 +2,7 @@
 
 namespace Binocular;
 
-class Action
+final class Action
 {
     /**
      * @var string
