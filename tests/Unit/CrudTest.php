@@ -10,11 +10,6 @@ use PHPUnit\Framework\TestCase;
 
 class CrudTest extends TestCase
 {
-    /**
-     * @var Store
-     */
-    private $store;
-
     public function test_state_change()
     {
         $store = new InMemoryStore($this->getReducers());
@@ -94,6 +89,11 @@ class CrudTest extends TestCase
             {
                 $this->currentState = $newState;
             }
+
+            public function getMetadata(): array
+            {
+                return ['app-name' => 'foo'];
+            }
         };
     }
 
@@ -122,6 +122,11 @@ class CrudTest extends TestCase
             {
                 $this->currentState = $newState;
             }
+
+            public function getMetadata(): array
+            {
+                return ['ip' => '8.8.8.8'];
+            }
         };
     }
 
@@ -149,6 +154,11 @@ class CrudTest extends TestCase
             public function setCurrentState(array $newState)
             {
                 $this->currentState = $newState;
+            }
+
+            public function getMetadata(): array
+            {
+                return ['deleted_by' => 'me'];
             }
         };
     }

@@ -39,7 +39,7 @@ class InMemoryStore extends BaseStore implements Store
         return null;
     }
 
-    public function persist(string $entityId, array $currentState = null, array $action)
+    public function persist(string $entityId, array $currentState = null, array $action, array $metadata = [])
     {
         if (!isset(self::$entities[$entityId])) {
             self::$entities[$entityId] = [];
@@ -50,6 +50,7 @@ class InMemoryStore extends BaseStore implements Store
         self::$entities[$entityId][++$version] = [
             'current_state' => $currentState,
             'action'        => $action,
+            'metadata'      => $metadata,
             'created_at'    => new \DateTime,
             'deleted_at'    => is_null($currentState) ? new \DateTime : null,
         ];

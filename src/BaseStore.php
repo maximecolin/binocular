@@ -41,19 +41,19 @@ abstract class BaseStore
      * If the entity is deletable this method should be used to check it.
      * If not, don't use it.
      */
-    protected function checkState(array $currentState = null): ?array
+    protected function checkState(array $rawEntity = null): ?array
     {
-        if (is_null($currentState)) {
+        if (is_null($rawEntity)) {
             return null;
         }
 
-        if (!is_null($currentState['deleted_at'])) {
-            $deletedAt = $currentState['deleted_at'];
+        if (!is_null($rawEntity['deleted_at'])) {
+            $deletedAt = $rawEntity['deleted_at'];
             $date = $deletedAt instanceof \DateTime ? $deletedAt->format(\DATE_COOKIE) : json_encode($deletedAt);
             $message = sprintf('Entity was deleted on %s', $date);
             throw new DeletedEntityException($message);
         }
 
-        return $currentState['current_state'];
+        return $rawEntity['current_state'];
     }
 }
