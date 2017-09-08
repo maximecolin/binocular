@@ -4,9 +4,7 @@ namespace Binocular;
 
 interface Store
 {
-    public function add(Event $event);
+    public function dispatch(Event $event): array;
 
-    public function current(string $entityId): ?Event;
-
-    public function getActions(): array;
+    public function getState(string $entityId): ?array;
 }

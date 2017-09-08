@@ -21,7 +21,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ThiagoMarini\\": "src/",
+      "Binocular\\": "src/",
       "Tests\\": "tests/"
     }
   }

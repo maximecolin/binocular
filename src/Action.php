@@ -40,4 +40,13 @@ class Action
     {
         return $this->name;
     }
+
+    public function toArray(): array
+    {
+        return [
+            'name'    => $this->getName(),
+            'version' => $this->getVersion(),
+            'data'    => $this->getData(),
+        ];
+    }
 }

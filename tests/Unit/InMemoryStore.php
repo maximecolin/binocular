@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use Binocular\DeletedEntityException;
 use Binocular\Event;
 use Binocular\Store;
 
@@ -12,60 +13,70 @@ class InMemoryStore implements Store
      */
     private static $entities = [];
 
-    public function add(Event $event)
+    /**
+     * @var array
+     */
+    private $reducers = [];
+
+    public function __construct(array $reducers)
     {
-        $actions = $this->getActions();
+        $this->reducers = $reducers;
+    }
+
+    public function dispatch(Event $event): array
+    {
         $action = $event->getAction();
 
-        if (!isset($actions[$action->getName()][$action->getVersion()])) {
+        if (!isset($this->reducers[$action->getName()][$action->getVersion()])) {
             throw new \RuntimeException(
                 sprintf('Action %s version %s not found', $action->getName(), $action->getVersion())
             );
         }
 
-        $version = $actions[$action->getName()][$action->getVersion()];
+        $reducer = $this->reducers[$action->getName()][$action->getVersion()];
 
-        if (!is_callable($version)) {
+        if (!is_callable($reducer)) {
             throw new \RuntimeException(
                 sprintf('Action %s version %s is not callable', $action->getName(), $action->getVersion())
             );
         }
 
-        $this->persist($event, $version);
+        $newState = $reducer($event->getCurrentState(), $action->getData());
+
+        $this->persist($event->getEntityId(), $newState, $action->toArray());
+
+        return $newState;
     }
 
-    public function current(string $entityId): ?Event
+    public function getState(string $entityId): ?array
     {
         if (isset(self::$entities[$entityId])) {
-            return end(self::$entities[$entityId]);
+            $currentState = end(self::$entities[$entityId]);
+
+            if(!is_null($currentState['deleted_at'])) {
+                $message = sprintf('Entity was deleted on %s', $currentState['deleted_at']->formar(\DATE_W3C));
+                throw new DeletedEntityException($message);
+            }
+
+            return $currentState['current_state'];
         }
 
         return null;
     }
 
-    private function persist(Event $event, Callable $actionVersion)
+    private function persist(string $entityId, array $currentState = null, array $action)
     {
-        if (!isset(self::$entities[$event->getEntityId()])) {
-            self::$entities[$event->getEntityId()] = [];
+        if (!isset(self::$entities[$entityId])) {
+            self::$entities[$entityId] = [];
         }
 
-        $version = count(self::$entities[$event->getEntityId()]);
+        $version = count(self::$entities[$entityId]);
 
-        $newState = $actionVersion($event->getAction()->getData());
-
-        $event->setCurrentState($newState);
-
-        self::$entities[$event->getEntityId()][$version] = $event;
-    }
-
-    public function getActions(): array
-    {
-        return [
-            'create' => [
-                '1.0' => function (array $currentState): array {
-                    return $currentState;
-                }
-            ]
+        self::$entities[$entityId][++$version] = [
+            'current_state' => $currentState,
+            'action'        => $action,
+            'created_at'    => new \DateTime,
+            'deleted_at'    => is_null($currentState) ? new \DateTime : null,
         ];
     }
 }

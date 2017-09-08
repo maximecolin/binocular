@@ -10,9 +10,33 @@ class StoreTest extends TestCase
 {
     public function test_events_can_be_added_to_store()
     {
-        $event = new class implements Event {
+        $event = $this->getEvent();
 
-            private $currentState = ['foo' => 'bar'];
+        $store = new InMemoryStore($this->getReducers());
+        $store->dispatch($event);
+        $state = $store->getState($event->getEntityId());
+
+        // check if new state was applied
+        $this->assertEquals($state, ['foo' => 'baz']);
+    }
+
+    private function getReducers()
+    {
+        return [
+            'create' => [
+                '1.0' => function (array $currentState, array $actionData): array {
+                    // calculate new state
+                    return $actionData;
+                }
+            ]
+        ];
+    }
+
+    private function getEvent(): Event
+    {
+        return new class implements Event
+        {
+            private $currentState = [];
 
             public function getEntityId(): string
             {
@@ -34,13 +58,5 @@ class StoreTest extends TestCase
                 $this->currentState = $newState;
             }
         };
-
-        $store = new InMemoryStore;
-        $store->add($event);
-        $storedEvent = $store->current($event->getEntityId());
-
-        $this->assertSame($event, $storedEvent);
-        // check if new state was applied
-        $this->assertEquals($storedEvent->getCurrentState(), ['foo' => 'baz']);
     }
 }
