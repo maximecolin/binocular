@@ -2,20 +2,20 @@
 
 namespace Tests\Unit;
 
-use Binocular\Action;
-use Binocular\Entity;
+use Binocular\Event;
 use Binocular\Store;
 
 class InMemoryStore implements Store
 {
     /**
-     * @var Entity[]
+     * @var Event[]
      */
     private static $entities = [];
 
-    public function save(string $id, Action $action)
+    public function add(Event $event)
     {
         $actions = $this->getActions();
+        $action = $event->getAction();
 
         if (!isset($actions[$action->getName()][$action->getVersion()])) {
             throw new \RuntimeException(
@@ -23,52 +23,47 @@ class InMemoryStore implements Store
             );
         }
 
-        $applicableAction = $actions[$action->getName()][$action->getVersion()];
+        $version = $actions[$action->getName()][$action->getVersion()];
 
-        if (!is_callable($applicableAction)) {
+        if (!is_callable($version)) {
             throw new \RuntimeException(
                 sprintf('Action %s version %s is not callable', $action->getName(), $action->getVersion())
             );
         }
 
-        $entity = $this->get($id);
-
-        $entity->setCurrentState($applicableAction($entity->getCurrentState()));
-
-        $this->persist($entity, $action);
+        $this->persist($event, $version);
     }
 
-    public function get(string $id): ?Entity
+    public function current(string $entityId): ?Event
     {
-        if (isset(self::$entities[$id])) {
-            return end(self::$entities[$id]);
+        if (isset(self::$entities[$entityId])) {
+            return end(self::$entities[$entityId]);
         }
 
         return null;
     }
 
-    private function persist(Entity $entity, Action $action)
+    private function persist(Event $event, Callable $actionVersion)
     {
-        if (!isset(self::$entities[$entity->getId()])) {
-            self::$entities[$entity->getId()] = [];
+        if (!isset(self::$entities[$event->getEntityId()])) {
+            self::$entities[$event->getEntityId()] = [];
         }
 
-        $versions = count(self::$entities[$entity->getId()]);
+        $version = count(self::$entities[$event->getEntityId()]);
 
-        self::$entities[$entity->getId()][$versions++] = $entity;
+        $newState = $actionVersion($event->getAction()->getData());
+
+        $event->setCurrentState($newState);
+
+        self::$entities[$event->getEntityId()][$version] = $event;
     }
 
-    /**
-     * All versioned actions should be kept in here
-     */
-    private function getActions(): array
+    public function getActions(): array
     {
         return [
-            'name' => [
-                'version' => function (array $currentState): array {
-                    $newState = [];
-
-                    return $newState;
+            'create' => [
+                '1.0' => function (array $currentState): array {
+                    return $currentState;
                 }
             ]
         ];

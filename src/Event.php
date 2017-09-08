@@ -2,11 +2,11 @@
 
 namespace Binocular;
 
-interface Entity
+interface Event
 {
-    public function getId(): string;
+    public function getEntityId(): string;
 
-    public function getAction(): array;
+    public function getAction(): Action;
 
     public function getCurrentState(): array;
 
