@@ -23,7 +23,12 @@ use Binocular\Store;
 $reducers = [
     'create' => [
         '1.0' => function (array $currentState, array $actionData): ?array {
-            // calculate new state
+            # Calculate new state in here.
+            # Things you should never do inside a reducer:
+            # - Mutate its arguments;
+            # - Perform side effects like API calls and routing transitions;
+            # - Call non-pure functions, e.g. $object->method();
+            
             return $actionData;
         }
     ]
